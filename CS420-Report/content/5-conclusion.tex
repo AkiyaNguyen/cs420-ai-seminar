@@ -1,29 +1,8 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-\subsection{Answering the Guiding Question}
-\label{sec:answer-guiding-question}
+This paper asked whether a highly accurate prediction necessarily comes with a reliable explanation. Within the scope of our experiments, the answer is negative. High accuracy reflects average performance over a test distribution and guarantees neither the stability, the uniqueness, nor the causal validity of a post-hoc explanation. Our random forest reaches about 97\% accuracy, yet for a correctly classified borderline instance LIME with 500 samples produced six different top-ranked features across 30 random seeds. LIME and SHAP agreed on confident instances but disagreed in ranking and sign on the borderline one, which is precisely the kind of case in which an explanation is most needed. Changing the SHAP background moved the base value of the random forest from 0.03 to 0.96 and reversed the sign of the leading attributions. Finally, removing redundant features more than doubled the attribution of \texttt{worst radius} without changing the accuracy, and an uninformative noisy copy of a feature received as much attribution as the original.
 
-Returning to the foundational question framing this study:
-\begin{center}
-    \textit{\textbf{Does a highly accurate prediction necessarily come with a reliable explanation?}}
-\end{center}
+These findings suggest several practical guidelines. For tree ensembles, TreeSHAP is preferable, as it is exact, deterministic, and orders of magnitude faster than the model-agnostic estimators; the background set and the feature-perturbation mode should be reported with the explanation. In model-agnostic settings, KernelSHAP should be preferred when local accuracy matters. When LIME is used, explanations should be repeated over several seeds with a budget of at least several thousand samples, and the $R^2$ of the surrogate should be reported. In all cases, explanations should be validated with a deletion test against a random baseline, and statistical attribution should be clearly distinguished from causal effect when results are communicated to clinicians or other stakeholders.
 
-Our synthesized theoretical and empirical evidence demonstrates that the definitive answer is \textbf{No}. High predictive accuracy reflects global statistical fidelity over a test distribution; it guarantees neither stability, uniqueness, nor physical veracity in post-hoc explanations:
-\begin{enumerate}
-    \item \textbf{Sampling Instability:} LIME can produce divergent explanations for identical predictions depending purely on the random seed used in Monte Carlo perturbation.
-    \item \textbf{Reference Relativity:} SHAP attributions depend intimately on the chosen background reference population; changing the baseline shifts the narrative of which features are responsible for the outcome.
-    \item \textbf{Collinearity and Confounding:} Highly correlated features allow black boxes to base predictions on surrogate signals that post-hoc tools reflect accurately from the model's perspective, yet fail to represent true underlying causal reality.
-\end{enumerate}
-
-\subsection{Practical Implications}
-\label{sec:recommendations}
-\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
-    \item \textbf{Ensemble Tree Architectures:} Prioritize \textbf{TreeSHAP} due to its exact polynomial complexity $\mathcal{O}(TLD^2)$, absence of sampling variance, and mathematical adherence to the consistency axiom.
-    \item \textbf{Model-Agnostic Settings:} When deploying LIME across arbitrary black boxes, practitioners should mandate sensitivity auditing across multiple random seeds ($>5$ runs) and tune kernel width $\sigma$ to ensure explanation stability.
-    \item \textbf{Domain Communication:} Explicitly distinguish between statistical attribution and actionable causal intervention when communicating XAI outputs to clinical and executive stakeholders.
-\end{itemize}
-
-\subsection{Future Work}
-\label{sec:future-work}
-Future investigations should integrate causal graphical models into post-hoc attribution (Causal XAI) and institutionalize automated faithfulness validation suites as standard continuous-integration pipelines in medical AI deployment.
+Our study is limited to a single dataset and a single explained model. Future work could extend the analysis to further datasets and model families, compare against explainers that respect feature dependence, such as conditional or causal Shapley values, and develop standardized faithfulness benchmarks for medical applications.

@@ -1,21 +1,90 @@
-\section*{Appendix: Reproducibility and Source Code}
-\label{sec:appendix-code}
-\addcontentsline{toc}{section}{Appendix: Reproducibility and Source Code}
+\section{Worked Example}
+\label{app:worked-example}
 
-\subsection*{A. Computational Environment and Dependencies}
+We compute the SHAP and LIME explanations by hand for the two-feature model
+\begin{equation}
+    f(x_1, x_2) = 0.2 + 0.4 x_1 + 0.3 x_2 + 0.2 x_1 x_2 ,
+\end{equation}
+where $X_1$ and $X_2$ are independent and uniformly distributed on $[0, 1]$, so that $\mathbb{E}[X_1] = \mathbb{E}[X_2] = 0.5$. The instance is $x = (1, 1)$, with prediction $f(1, 1) = 1.10$.
+
+\subsection{SHAP Values}
+The base value is
+\begin{equation}
+    \begin{split}
+        \phi_0 = \mathbb{E}[f(X)] &= 0.2 + 0.4(0.5) + 0.3(0.5) + 0.2(0.5)(0.5) \\
+        &= 0.60 .
+    \end{split}
+\end{equation}
+For feature 1, the coalitions are $S = \emptyset$ and $S = \{2\}$, both with weight $\frac{0!\,1!}{2!} = \frac{1!\,0!}{2!} = \frac{1}{2}$. The required values are
+\begin{align*}
+    f_x(\{1\}) = \mathbb{E}[f(1, X_2)] &= 0.2 + 0.4 + 0.15 + 0.1 = 0.85, \\
+    f_x(\{2\}) = \mathbb{E}[f(X_1, 1)] &= 0.2 + 0.2 + 0.3 + 0.1 = 0.80,
+\end{align*}
+so the marginal contributions of feature 1 are $0.85 - 0.60 = 0.25$ for $S = \emptyset$ and $1.10 - 0.80 = 0.30$ for $S = \{2\}$, and
+\begin{equation}
+    \phi_1 = \tfrac{1}{2}(0.25) + \tfrac{1}{2}(0.30) = 0.275 .
+\end{equation}
+Similarly,
+\begin{equation}
+    \phi_2 = \tfrac{1}{2}(0.80 - 0.60) + \tfrac{1}{2}(1.10 - 0.85) = 0.225 ,
+\end{equation}
+and local accuracy holds: $\phi_0 + \phi_1 + \phi_2 = 0.60 + 0.275 + 0.225 = 1.10 = f(1, 1)$.
+
+\subsection{LIME Explanation}
+Each feature is one interpretable component, so $x' = (1, 1)$. A removed component is replaced by its mean $0.5$, i.e., $[h_x(z')]_j = x_j$ if $z'_j = 1$ and $0.5$ otherwise. Because $f$ is linear in each feature separately and the features are independent, this mean imputation (\Cref{eq:approx-lin}) yields the same coalition values as the expectations used above (\Cref{eq:approx-indep}), so the two explanations are based on identical information. With $d' = 2$, we enumerate all four perturbed samples instead of sampling them, take $D(x, z)^2$ as the number of removed components, and set $\sigma = 1$, so that $\pi_x = e^{-D^2}$:
+\begin{center}
+    \footnotesize
+    \begin{tabular}{@{}cccc@{}}
+        \toprule
+        $z'$ & $z = h_x(z')$ & $f(z)$ & $\pi_x(z)$ \\
+        \midrule
+        $(1,1)$ & $(1, 1)$ & 1.10 & 1.000 \\
+        $(1,0)$ & $(1, 0.5)$ & 0.85 & 0.368 \\
+        $(0,1)$ & $(0.5, 1)$ & 0.80 & 0.368 \\
+        $(0,0)$ & $(0.5, 0.5)$ & 0.60 & 0.135 \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+With $K = 2$ the sparsity constraint is inactive. Following the reference implementation, the surrogate includes an intercept, $g(z') = w_0 + w_1 z'_1 + w_2 z'_2$, and is obtained by weighted least squares, $w = (Z^\top W Z)^{-1} Z^\top W y$, where $Z$ has rows $(1, z'_1, z'_2)$, $W = \operatorname{diag}(\pi_x)$, and $y = f(z)$. This gives
+\begin{equation}
+    w_0 = 0.573, \qquad w_1 = 0.287, \qquad w_2 = 0.237,
+\end{equation}
+and hence $g(x') = 1.096$.
+
+\subsection{Comparison}
+The ranking agrees with SHAP, but local accuracy fails: $g(x') = 1.096 \neq f(x) = 1.10$, because the interaction term $0.2\,x_1 x_2$ cannot be represented by a linear $g$ and the residual is spread over all four samples. The result also depends on $\sigma$. As $\sigma \to \infty$, all weights become equal and the fit reduces to ordinary least squares, giving $w_1 = 0.275$, $w_2 = 0.225$, $w_0 = 0.5875 \neq \phi_0$, and $g(x') = 1.0875$, so local accuracy still fails. The slopes coincide with the Shapley values only because $M = 2$: an unweighted regression over all coalitions yields the Banzhaf values, which equal the Shapley values for two features but differ from them in general. The SHAP kernel (\Cref{eq:shap-kernel}) instead assigns infinite weight to $z' = \mathbf{0}$ and $z' = \mathbf{1}$, which forces $g(\mathbf{0}) = \phi_0$ and $g(\mathbf{1}) = f(x)$ and recovers the Shapley values for any $M$.
+
+\section{Reproducibility and Source Code}
+\label{sec:appendix-code}
+
+\subsection{Computational Environment}
 \label{sec:env-specs}
-All computational experiments, baseline model training, and explanation pipelines were executed within the following environment:
+All experiments were executed in the following environment:
 \begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
-    \item \textbf{Language:} Python 3.10+
-    \item \textbf{Core Libraries:} \texttt{scikit-learn}, \texttt{numpy}, \texttt{pandas}, \texttt{scipy}
-    \item \textbf{Explainability Suites:} \texttt{shap} (v0.44+), \texttt{lime} (v0.2.0+)
-    \item \textbf{Visualization:} \texttt{matplotlib}, \texttt{seaborn}
+    \item \textbf{Language:} Python 3.12.
+    \item \textbf{Core libraries:} \texttt{scikit-learn} 1.9, \texttt{numpy} 2.5, \texttt{pandas} 3.1, \texttt{scipy}.
+    \item \textbf{Explainability libraries:} \texttt{shap} 0.54, \texttt{lime} 0.2.
+    \item \textbf{Visualization:} \texttt{matplotlib}, \texttt{seaborn}.
 \end{itemize}
 
-\subsection*{B. Hyperparameters and Configurations}
+\subsection{Source Code}
+\label{sec:source-code}
+The experiments are implemented in three independent, deterministic scripts sharing a helper module:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \texttt{exp1\_local\_explanations.py}: three-feature Shapley sanity check, local explanations, the comparison table, and the RF--GB model comparison (\Cref{sec:feature-attribution}).
+    \item \texttt{exp2\_stability.py}: sensitivity to the seed, sample budget, kernel width, and background (\Cref{sec:instability-divergence}).
+    \item \texttt{exp3\_faithfulness.py}: deletion curves and the correlated-feature experiment (\Cref{sec:critical-analysis}).
+    \item \texttt{common.py}: data split, models, instance selection, explainer wrappers, and metrics.
+\end{itemize}
+
+\subsection{Hyperparameters and Configurations}
 \label{sec:hyperparams}
 \begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
-    \item \textbf{Random Forest:} \texttt{n\_estimators=100}, \texttt{max\_depth=10}, \texttt{random\_state=42}, \texttt{criterion='gini'}.
-    \item \textbf{LIME:} \texttt{mode='classification'}, \texttt{discretize\_continuous=True}, \texttt{num\_samples=2000}, $\sigma = 0.75 \times \sqrt{d}$.
-    \item \textbf{TreeSHAP:} \texttt{feature\_perturbation='tree\_path\_dependent'}, \texttt{model\_output='probability'}.
+    \item \textbf{Data split:} stratified 80/20, \texttt{random\_state=42}; label $1 = $ malignant.
+    \item \textbf{Random Forest:} \texttt{n\_estimators=300}, \texttt{random\_state=42}, other parameters at their defaults.
+    \item \textbf{Gradient Boosting} (model comparison only): \texttt{GradientBoostingClassifier(random\_state=42)} with default parameters.
+    \item \textbf{Background set:} 100 random training instances, shared by KernelSHAP and TreeSHAP.
+    \item \textbf{LIME:} regression mode, quartile discretizer, \texttt{num\_samples=5000}, \texttt{kernel\_width} $= 0.75\sqrt{d}$ with $d = 30$, all 30 features retained.
+    \item \textbf{KernelSHAP:} \texttt{nsamples=2000}, \texttt{l1\_reg=False}.
+    \item \textbf{TreeSHAP:} interventional feature perturbation with probability output (reference); tree-path-dependent perturbation for comparison.
 \end{itemize}

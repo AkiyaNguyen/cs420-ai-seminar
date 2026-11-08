@@ -1,21 +1,21 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Modern machine learning systems have achieved remarkable performance across diverse analytical benchmarks. However, the most accurate predictors---such as deep neural networks or ensemble tree architectures---even domain experts struggle to interpret, creating a tension between accuracy and interpretability.
+The most accurate machine learning models, such as deep neural networks and tree ensembles, are also among the hardest to interpret. In applications such as clinical oncology or credit risk assessment, accuracy alone is insufficient: a decision is acted upon only if its rationale can be examined and verified~\cite{BARREDOARRIETA202082}. Explainable artificial intelligence (XAI) aims to provide such rationales, and among post-hoc local explanation methods, LIME~\cite{ribeiro-etal-2016-trust} and SHAP~\cite{NIPS2017_8a20a862} have become de facto standards in both research and practice.
 
-In critical applications such as clinical oncology, autonomous driving, and financial risk assessment, high predictive accuracy alone is insufficient. Stakeholders require transparent, verifiable rationales before decisions can be safely operationalized~\cite{BARREDOARRIETA202082}. Explainable Artificial Intelligence (XAI) has emerged to bridge this fundamental tension between predictive capacity and human interpretability. Among post-hoc local explanation frameworks, LIME~\cite{ribeiro-etal-2016-trust} and SHAP~\cite{NIPS2017_8a20a862} have become standard industry and research benchmarks. Despite their ubiquity, practitioner reliance on these tools often presumes that high predictive accuracy naturally guarantees fidelity and reliability in the accompanying explanations.
+An explanation, however, is itself the output of an algorithm with its own assumptions and hyperparameters. LIME fits a surrogate model to randomly sampled perturbations, and SHAP measures contributions relative to a chosen background distribution. In practice, it is often implicitly assumed that an accurate model yields explanations that are equally trustworthy. This paper examines that assumption.
 
 \subsection{Research Question}
 \label{sec:guiding-question}
 
-Motivated by this gap, this seminar investigates the central question: \textit{``Does a highly accurate prediction necessarily come with a reliable explanation?''} 
+We address the question: \textit{does a highly accurate prediction necessarily come with a reliable explanation?} We consider an explanation reliable if it is stable under the method's random choices and settings, faithful to the model it explains, and consistent across methods that claim to answer the same question.
 
-To answer this question, we systematically examine LIME and SHAP across both theoretical foundations and empirical behavior:
-\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
-    \item \textbf{Conceptual Foundations:} Clarifying where post-hoc local methods stand within the broader XAI taxonomy, distinguishing intrinsic from post-hoc models and local from global scopes.
-    \item \textbf{Theoretical Formulations \& Worked Examples:} Walking through the exact mathematical objectives and game-theoretic foundations of both methods, accompanied by step-by-step numerical calculations on an illustrative example.
-    \item \textbf{Empirical Demonstration:} Evaluating explanations produced for a Random Forest classifier on the Breast Cancer Wisconsin dataset across confident, borderline, and conflicting prediction scenarios.
-    \item \textbf{Faithfulness \& Limitations:} Analyzing explanation stability across random seeds, runtime trade-offs, empirical faithfulness via feature deletion, and why post-hoc attributions must not be conflated with causal effects.
+Our contributions are as follows:
+\begin{itemize}
+    \item We present LIME and SHAP within the common framework of additive feature attribution, define all quantities involved, and work through both methods by hand on the same illustrative model, which makes the absence of local accuracy in LIME directly visible.
+    \item We compare LIME, KernelSHAP, and TreeSHAP on a random forest trained on the Breast Cancer Wisconsin dataset, using the exact attributions of interventional TreeSHAP as the reference.
+    \item We quantify the sensitivity of each method to the random seed, the sample budget, and the background data, and identify concrete instances where explanations are unstable or contradictory.
+    \item We evaluate faithfulness with deletion curves against a random baseline, and use correlated and duplicated features to illustrate why attributions must not be read as causal effects.
 \end{itemize}
 
-
+The remainder of the paper is organized as follows. \Cref{sec:background} reviews the XAI taxonomy and the two methods. \Cref{sec:method} formalizes LIME and SHAP, with a worked example in \Cref{app:worked-example}. \Cref{sec:results} reports our experiments, \Cref{sec:critical-analysis} discusses faithfulness and causality, and \Cref{sec:conclusion} concludes.
