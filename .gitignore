@@ -1,2 +1,18 @@
+.venv/
 artifacts/
+__pycache__/
+*.log
 
+# Local-only material, not shared in this repository
+slides/
+report/
+
+# LaTeX build files (main.pdf is tracked)
+CS420-Report/*.aux
+CS420-Report/*.bbl
+CS420-Report/*.blg
+CS420-Report/*.out
+CS420-Report/*.toc
+CS420-Report/*.fls
+CS420-Report/*.fdb_latexmk
+CS420-Report/*.synctex.gz
