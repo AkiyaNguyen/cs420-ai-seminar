@@ -16,7 +16,8 @@ Our contributions are as follows:
     \item We compare LIME, KernelSHAP, and TreeSHAP on a random forest trained on the Breast Cancer Wisconsin dataset, using the exact attributions of interventional TreeSHAP as the reference.
     \item We quantify the sensitivity of each method to the random seed, the sample budget, and the background data, and identify concrete instances where explanations are unstable or contradictory.
     \item We evaluate faithfulness with deletion curves against a random baseline, and use correlated and duplicated features to illustrate why attributions must not be read as causal effects.
-    \item The \href{https://github.com/AkiyaNguyen/cs420-ai-seminar}{source code and reproduction instructions} are available on GitHub.
 \end{itemize}
+
+\noindent The \href{https://github.com/AkiyaNguyen/cs420-ai-seminar}{experimental code and reproduction instructions} are available on GitHub.
 
 The remainder of the paper is organized as follows. \Cref{sec:background} reviews the XAI taxonomy and the two methods. \Cref{sec:method} formalizes LIME and SHAP, with a worked example in \Cref{app:worked-example}. \Cref{sec:results} reports our experiments, \Cref{sec:critical-analysis} discusses faithfulness and causality, and \Cref{sec:conclusion} concludes.
