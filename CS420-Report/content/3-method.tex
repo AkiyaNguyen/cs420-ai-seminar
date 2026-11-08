@@ -202,7 +202,7 @@
         \end{split}
         \label{eq:kernelshap-regression}
     \end{equation}
-    Since the coalitions are already drawn according to the kernel, they enter the regression with equal weights, and the constraint is handled by eliminating one coefficient. Each explanation requires $N \cdot |B|$ model evaluations. Lundberg and Lee~\cite{NIPS2017_8a20a862} report that this joint regression attains a given accuracy with considerably fewer evaluations than estimating each attribution separately by permutation sampling.
+    Since the coalitions are already drawn according to the kernel, they enter the regression with equal weights, and the constraint is handled by eliminating one coefficient. Each explanation requires $N \cdot |B|$ model evaluations. Lundberg and Lee~\cite{NIPS2017_8a20a862} report that this joint regression attains a given accuracy with considerably fewer evaluations than estimating each attribution separately by permutation sampling. For tree ensembles, interventional TreeSHAP~\cite{lundberg2020local} computes the same Shapley values for a fixed $x$ and background set $B$ exactly and efficiently, by exploiting the tree structure instead of sampling coalitions; we use it as the reference in \Cref{sec:results}.
 
     \subsubsection{Limitations}
 

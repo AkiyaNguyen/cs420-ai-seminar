@@ -11,7 +11,7 @@ Three experiments compare LIME, Kernel SHAP and TreeSHAP on a Random Forest, wit
 |---|---|---|---|
 | `src/exp1_local_explanations.py` | 3, 4, 5 | 3-feature Shapley sanity check; 3 instances explained by every method; feature-contribution charts, LIME-versus-SHAP table | Section 4.2: contribution and waterfall figures, LIME-versus-SHAP table |
 | `src/exp2_stability.py` | 5 | Sensitivity to seed, sample budget, LIME kernel width and SHAP background; runtime; unstable explanation example | Section 4.3: stability and background tables; Appendix C figure |
-| `src/exp3_faithfulness.py` | 6 | Deletion curves against a random baseline; correlated features (drop redundant / add noisy copy) to show importance is not causation | Section 5.1: deletion AUC table; Section 5.2: correlated-features table. Its figures are not used |
+| `src/exp3_faithfulness.py` | 6 | Deletion curves against a random baseline; correlated features (drop redundant / add noisy copy) to show importance is not causation | Section 5.1: deletion AUC table; Section 5.3: correlated-features table; Appendix D: deletion-curve figure |
 | `src/common.py` | — | Data split, models, instance selection, explainer wrappers, comparison metrics, figure/table saving | — |
 | `CS420-Report/` | 1–6 | LaTeX sources and compiled `main.pdf` of the seminar paper | — |
 

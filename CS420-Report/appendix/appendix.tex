@@ -61,10 +61,10 @@ The ranking agrees with SHAP, but local accuracy fails: $g(x') = 1.096 \neq f(x)
 \label{sec:env-specs}
 All experiments were executed in the following environment:
 \begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
-    \item \textbf{Language:} Python 3.12.
-    \item \textbf{Core libraries:} \texttt{scikit-learn} 1.9, \texttt{numpy} 2.5, \texttt{pandas} 3.1, \texttt{scipy}.
+    \item \textbf{Language:} Python 3.14.
+    \item \textbf{Core libraries:} \texttt{scikit-learn} 1.9, \texttt{numpy} 2.5, \texttt{pandas} 3.1, \texttt{scipy} 1.18.
     \item \textbf{Explainability libraries:} \texttt{shap} 0.54, \texttt{lime} 0.2.
-    \item \textbf{Visualization:} \texttt{matplotlib}, \texttt{seaborn}.
+    \item \textbf{Visualization:} \texttt{matplotlib} 3.11, \texttt{seaborn} 0.13.
 \end{itemize}
 
 \subsection{Source Code}
@@ -98,4 +98,16 @@ The experiments are implemented in three independent, deterministic scripts shar
     \includegraphics[width=\columnwidth]{img/exp2_background_borderline.png}
     \caption{KernelSHAP attributions of the borderline RF instance under five background sets.}
     \label{fig:background}
+\end{figure}
+
+\section{Deletion Curves}
+\label{app:deletion}
+
+\Cref{fig:deletion} shows the mean deletion curves from which the AUC values in \Cref{tab:deletion} are computed. All curves start from the same prediction ($k = 0$) and end at the same point ($k = 30$, all features replaced), so they differ only in how quickly the probability falls. The curves of KernelSHAP and TreeSHAP nearly coincide. The slight rise near $k = 30$ occurs because the lowest-ranked features have negative attributions, and replacing them restores some probability of the predicted class.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\columnwidth]{img/exp3_deletion_curves.png}
+    \caption{Mean probability of the predicted class over 40 test instances as the top-$k$ features of each ranking are replaced by background values.}
+    \label{fig:deletion}
 \end{figure}
