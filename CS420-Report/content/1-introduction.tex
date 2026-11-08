@@ -1,0 +1,21 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Modern machine learning systems have achieved remarkable performance across diverse analytical benchmarks. However, the most accurate predictors---such as deep neural networks or ensemble tree architectures---even domain experts struggle to interpret, creating a tension between accuracy and interpretability.
+
+In critical applications such as clinical oncology, autonomous driving, and financial risk assessment, high predictive accuracy alone is insufficient. Stakeholders require transparent, verifiable rationales before decisions can be safely operationalized~\cite{BARREDOARRIETA202082}. Explainable Artificial Intelligence (XAI) has emerged to bridge this fundamental tension between predictive capacity and human interpretability. Among post-hoc local explanation frameworks, LIME~\cite{ribeiro-etal-2016-trust} and SHAP~\cite{NIPS2017_8a20a862} have become standard industry and research benchmarks. Despite their ubiquity, practitioner reliance on these tools often presumes that high predictive accuracy naturally guarantees fidelity and reliability in the accompanying explanations.
+
+\subsection{Research Question}
+\label{sec:guiding-question}
+
+Motivated by this gap, this seminar investigates the central question: \textit{``Does a highly accurate prediction necessarily come with a reliable explanation?''} 
+
+To answer this question, we systematically examine LIME and SHAP across both theoretical foundations and empirical behavior:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Conceptual Foundations:} Clarifying where post-hoc local methods stand within the broader XAI taxonomy, distinguishing intrinsic from post-hoc models and local from global scopes.
+    \item \textbf{Theoretical Formulations \& Worked Examples:} Walking through the exact mathematical objectives and game-theoretic foundations of both methods, accompanied by step-by-step numerical calculations on an illustrative example.
+    \item \textbf{Empirical Demonstration:} Evaluating explanations produced for a Random Forest classifier on the Breast Cancer Wisconsin dataset across confident, borderline, and conflicting prediction scenarios.
+    \item \textbf{Faithfulness \& Limitations:} Analyzing explanation stability across random seeds, runtime trade-offs, empirical faithfulness via feature deletion, and why post-hoc attributions must not be conflated with causal effects.
+\end{itemize}
+
+

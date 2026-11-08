@@ -1,0 +1,29 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+\subsection{Answering the Guiding Question}
+\label{sec:answer-guiding-question}
+
+Returning to the foundational question framing this study:
+\begin{center}
+    \textit{\textbf{Does a highly accurate prediction necessarily come with a reliable explanation?}}
+\end{center}
+
+Our synthesized theoretical and empirical evidence demonstrates that the definitive answer is \textbf{No}. High predictive accuracy reflects global statistical fidelity over a test distribution; it guarantees neither stability, uniqueness, nor physical veracity in post-hoc explanations:
+\begin{enumerate}
+    \item \textbf{Sampling Instability:} LIME can produce divergent explanations for identical predictions depending purely on the random seed used in Monte Carlo perturbation.
+    \item \textbf{Reference Relativity:} SHAP attributions depend intimately on the chosen background reference population; changing the baseline shifts the narrative of which features are responsible for the outcome.
+    \item \textbf{Collinearity and Confounding:} Highly correlated features allow black boxes to base predictions on surrogate signals that post-hoc tools reflect accurately from the model's perspective, yet fail to represent true underlying causal reality.
+\end{enumerate}
+
+\subsection{Practical Implications}
+\label{sec:recommendations}
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Ensemble Tree Architectures:} Prioritize \textbf{TreeSHAP} due to its exact polynomial complexity $\mathcal{O}(TLD^2)$, absence of sampling variance, and mathematical adherence to the consistency axiom.
+    \item \textbf{Model-Agnostic Settings:} When deploying LIME across arbitrary black boxes, practitioners should mandate sensitivity auditing across multiple random seeds ($>5$ runs) and tune kernel width $\sigma$ to ensure explanation stability.
+    \item \textbf{Domain Communication:} Explicitly distinguish between statistical attribution and actionable causal intervention when communicating XAI outputs to clinical and executive stakeholders.
+\end{itemize}
+
+\subsection{Future Work}
+\label{sec:future-work}
+Future investigations should integrate causal graphical models into post-hoc attribution (Causal XAI) and institutionalize automated faithfulness validation suites as standard continuous-integration pipelines in medical AI deployment.

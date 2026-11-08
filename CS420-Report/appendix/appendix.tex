@@ -1,0 +1,21 @@
+\section*{Appendix: Reproducibility and Source Code}
+\label{sec:appendix-code}
+\addcontentsline{toc}{section}{Appendix: Reproducibility and Source Code}
+
+\subsection*{A. Computational Environment and Dependencies}
+\label{sec:env-specs}
+All computational experiments, baseline model training, and explanation pipelines were executed within the following environment:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Language:} Python 3.10+
+    \item \textbf{Core Libraries:} \texttt{scikit-learn}, \texttt{numpy}, \texttt{pandas}, \texttt{scipy}
+    \item \textbf{Explainability Suites:} \texttt{shap} (v0.44+), \texttt{lime} (v0.2.0+)
+    \item \textbf{Visualization:} \texttt{matplotlib}, \texttt{seaborn}
+\end{itemize}
+
+\subsection*{B. Hyperparameters and Configurations}
+\label{sec:hyperparams}
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Random Forest:} \texttt{n\_estimators=100}, \texttt{max\_depth=10}, \texttt{random\_state=42}, \texttt{criterion='gini'}.
+    \item \textbf{LIME:} \texttt{mode='classification'}, \texttt{discretize\_continuous=True}, \texttt{num\_samples=2000}, $\sigma = 0.75 \times \sqrt{d}$.
+    \item \textbf{TreeSHAP:} \texttt{feature\_perturbation='tree\_path\_dependent'}, \texttt{model\_output='probability'}.
+\end{itemize}

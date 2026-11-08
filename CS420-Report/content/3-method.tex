@@ -1,0 +1,206 @@
+\section{Explanation Methods}
+\label{sec:method}
+
+\subsection{Mathematical Formulation of LIME}
+\label{sec:math-lime}
+
+LIME operationalizes a three-stage computational workflow:
+\begin{center}
+    \textbf{Stochastic Perturbation $\longrightarrow$ Locality-based Kernel Weighting $\longrightarrow$ Fitting Interpretable Surrogate}
+\end{center}
+
+Formally, the explanation $\xi(x)$ for instance $x$ is defined via the constrained optimization objective:
+\begin{equation}
+    \xi(x) = \arg\min_{g \in G} \left[ \mathcal{L}(f, g, \pi_x) + \Omega(g) \right]
+    \label{eq:lime-objective}
+\end{equation}
+
+\subsection{Definitions of Symbols and Modeling Assumptions}
+\begin{itemize}
+    \item $f: \mathbb{R}^d \rightarrow [0, 1]$: The fixed, pre-trained black-box predictive model (e.g., probability output of an ensemble classifier).
+    \item $x \in \mathbb{R}^d$: The original instance in continuous/discrete feature space being explained, mapped to binary representation $x' \in \{0, 1\}^M$ indicating feature presence.
+    \item $g \in G$: The interpretable surrogate model. Typically, $G$ is the family of sparse linear models:
+    \begin{equation}
+        g(z') = w_0 + \sum_{j=1}^M w_j z'_j = w_0 + w^T z'
+    \end{equation}
+    where $w_j \in \mathbb{R}$ quantifies the local attribution of feature $j$.
+    \item $\pi_x(z)$: The proximity measure defining the local neighborhood around $x$. Using an exponential kernel over a distance metric $D(x, z)$ (e.g., Euclidean or cosine distance):
+    \begin{equation}
+        \pi_x(z) = \exp\left( - \frac{D(x, z)^2}{\sigma^2} \right)
+        \label{eq:lime-kernel}
+    \end{equation}
+    where $\sigma > 0$ denotes the kernel width hyperparameter determining the effective neighborhood volume.
+    \item $\mathcal{L}(f, g, \pi_x)$: The local unfaithfulness loss measuring how poorly $g$ approximates $f$ in the neighborhood defined by $\pi_x$:
+    \begin{equation}
+        \mathcal{L}(f, g, \pi_x) = \sum_{z, z' \in \mathcal{Z}} \pi_x(z) \left( f(z) - g(z') \right)^2
+    \end{equation}
+    where $\mathcal{Z}$ is a dataset of synthetic perturbations sampled around $x$.
+    \item $\Omega(g)$: The complexity penalty enforcing human interpretability (e.g., restricting the number of non-zero coefficients via $\Omega(g) = \infty \cdot \mathbb{I}(\|w\|_0 > K)$ or via $L_1$ Lasso regularization).
+\end{itemize}
+
+\subsection{Mathematical Formulation of SHAP}
+\label{sec:math-shap}
+
+\subsubsection{Additive Feature Attribution Methods}
+Let $f$ denote the original predictive model to be explained, and let $g$ represent an explanation model. Following the framework formalized by Lundberg and Lee~\cite{NIPS2017_8a20a862}, we focus on local explanation methods designed to explain a specific prediction $f(x)$ for a single input instance $x \in \mathbb{R}^d$, as originally popularized by LIME~\cite{ribeiro-etal-2016-trust}.
+
+Explanation models frequently operate on a \textit{simplified input representation} $x'$, which maps to the original input space through a mapping function $x = h_x(x')$. Local methods aim to ensure that the surrogate matches the black box locally, namely $g(z') \approx f(h_x(z'))$ whenever $z' \approx x'$ (with $h_x(x') = x$, even if $x'$ contains less information than $x$, because $h_x$ is specific to the current query input $x$).
+
+\begin{definition}[Additive Feature Attribution Methods]
+\label{def:additive-attribution}
+An explanation model $g$ is an additive feature attribution method if it is defined as a linear function of binary variables:
+\begin{equation}
+    g(z') = \phi_0 + \sum_{i=1}^M \phi_i z'_i
+    \label{eq:shap-additive}
+\end{equation}
+where $z' \in \{0, 1\}^M$ is a binary vector indicating the presence ($z'_i = 1$) or absence ($z'_i = 0$) of simplified feature $i$, $M$ is the number of simplified input features, and $\phi_i \in \mathbb{R}$ quantifies the effect attributed to feature $i$. The constant $\phi_0 = f_x(\emptyset) = \mathbb{E}[f(X)]$ represents the model's base expected prediction when no feature information is provided.
+\end{definition}
+
+Methods matching this definition attribute an effect $\phi_i$ to each feature, such that summing the effects of all feature attributions approximates the original model output $f(x)$ for the current input (where all features are present, $z'_i = 1$). Crucially, Lundberg and Lee~\cite{NIPS2017_8a20a862} demonstrated that widely adopted local explanation frameworks---including LIME, DeepLIFT, and Layer-Wise Relevance Propagation---all match this formulation, differing primarily in how they define the mapping $h_x$, the neighborhood kernel, and their specific attribution coefficients.
+
+\subsubsection{Shapley Values and the Characteristic Function}
+Originating from cooperative game theory~\cite{shapley1953value}, the Shapley value divides the total game payout fairly among players according to their marginal contributions. Transferred to machine learning, features act as players, and the model prediction serves as the payout:
+\begin{equation}
+    \phi_i(f, x) = \sum_{S \subseteq F \setminus \{i\}} \frac{|S|!(|F| - |S| - 1)!}{|F|!} \left[ f_x(S \cup \{i\}) - f_x(S) \right]
+    \label{eq:shapley-formula}
+\end{equation}
+where:
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+    \item $F = \{1, 2, \dots, M\}$ is the grand coalition containing all $M$ available features (with cardinality $|F| = M$).
+    \item $S \subseteq F \setminus \{i\}$ is a sub-coalition excluding feature $i$, with cardinality $|S|$.
+    \item The combinatorial factor $\frac{|S|!(|F| - |S| - 1)!}{|F|!} = \frac{|S|!(M - |S| - 1)!}{M!}$ denotes the probability that feature $i$ joins coalition $S$ when all features are ordered uniformly at random.
+    \item $f_x(S)$ is the characteristic value function representing the model's conditional expected prediction when only the subset of features in $S$ is known ($z'_i = 1$ for $i \in S$ and $z'_i = 0$ for $i \notin S$). To compute $f(h_x(z'))$ when black-box models cannot natively evaluate missing inputs, the conditional expectation can be approximated across successive simplifying assumptions:
+    \begin{align}
+        f(h_x(z')) &= \mathbb{E}[f(X) \mid X_S = x_S] && \text{\scriptsize(Simplified input mapping)} \label{eq:approx-cond} \\
+        &= \mathbb{E}_{X_{\bar{S}} \mid X_S = x_S}\left[ f(x_S, X_{\bar{S}}) \right] && \text{\scriptsize(Expectation over absent features $X_{\bar{S}} \mid X_S$)} \label{eq:approx-marginal} \\
+        &\approx \mathbb{E}_{X_{\bar{S}}}\left[ f(x_S, X_{\bar{S}}) \right] = \int f(x_S, x_{\bar{S}}) \, p(x_{\bar{S}}) \, dx_{\bar{S}} && \text{\scriptsize(Feature independence assumption)} \label{eq:approx-indep} \\
+        &\approx f\left( \left[ x_S, \mathbb{E}[X_{\bar{S}}] \right] \right) && \text{\scriptsize(Model linearity assumption)} \label{eq:approx-lin}
+    \end{align}
+    where $x_S$ denotes the observed values for features present in coalition $S$, and $\bar{S} = F \setminus S$ denotes the set of absent features. While \Cref{eq:approx-indep} is standardly adopted in KernelSHAP via empirical background sampling, \Cref{eq:approx-lin} further assumes model linearity to replace missing features simply by their mean reference values.
+\end{itemize}
+
+\subsubsection{Axiomatic Foundation and Theorem 1}
+\label{sec:shap-axioms}
+
+The connection between additive feature attributions and cooperative game theory is formalized by the following uniqueness result:
+\begin{theorem}[Uniqueness of Shapley Attributions]
+\label{thm:shapley-uniqueness}
+Only one possible explanation model $g$ follows Definition~\ref{def:additive-attribution} and simultaneously satisfies Properties 1, 2, and 3: the attribution values $\phi_i(f, x)$ are uniquely given by the classical Shapley value formula defined in \Cref{eq:shapley-formula}.
+\end{theorem}
+
+Grounded in cooperative game theory~\cite{shapley1953value}, Theorem~\ref{thm:shapley-uniqueness} establishes that for a given mapping $h_x$, any additive feature attribution method not based on Shapley values necessarily violates either Local Accuracy or Consistency (as missingness is already respected by most methods).
+
+The three foundational properties governing this uniqueness result are defined as follows:
+\begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
+    \item \textbf{Property 1 (Local Accuracy / Efficiency):} The explanation model $g(x')$ matches the original black-box model $f(x)$ when $x = h_x(x')$:
+    \begin{equation}
+        f(x) = g(x') = \phi_0 + \sum_{i=1}^M \phi_i x'_i
+        \label{eq:local-accuracy}
+    \end{equation}
+    where $\phi_0 = f_x(\emptyset)$ is the base model output. When all features are present in the query instance ($x'_i = 1$ for all $i$), this ensures that the sum of all attributions plus the baseline exactly recovers the prediction $f(x)$.
+    \item \textbf{Property 2 (Missingness):} Features missing in the simplified input representation receive zero allocated impact:
+    \begin{equation}
+        x'_i = 0 \implies \phi_i = 0
+        \label{eq:missingness}
+    \end{equation}
+    If the simplified inputs represent feature presence, any feature absent in the original input is guaranteed to have no influence on the explanation.
+    \item \textbf{Property 3 (Consistency / Monotonicity):} Let $f$ and $f'$ be two predictive models. If a feature's marginal contribution in model $f'$ is greater than or equal to that in model $f$ across all possible coalitions:
+    \begin{equation}
+        f'_x(S \cup \{i\}) - f'_x(S) \ge f_x(S \cup \{i\}) - f_x(S) \quad \forall S \subseteq F \setminus \{i\}
+        \label{eq:consistency}
+    \end{equation}
+    then its allocated attribution cannot decrease: $\phi_i(f', x) \ge \phi_i(f, x)$.
+\end{enumerate}
+
+\subsubsection{Model-Agnostic Approximation: KernelSHAP}
+\label{sec:kernelshap-mechanism}
+
+Direct computation of \Cref{eq:shapley-formula} requires evaluating $2^M$ coalitions. For datasets with moderate to high dimensionality (such as the 30 features in Breast Cancer Wisconsin, requiring $2^{30} \approx 10^9$ evaluations), exact combinatorial summation is computationally impossible.
+
+At first glance, the weighted regression formulation of LIME in \Cref{eq:lime-objective} appears fundamentally distinct from the combinatorial Shapley formula in \Cref{eq:shapley-formula}. However, because linear LIME belongs to the family of additive feature attribution methods (Definition~\ref{def:additive-attribution}), Theorem~\ref{thm:shapley-uniqueness} guarantees that Shapley values represent the unique set of coefficients that satisfy Local Accuracy, Missingness, and Consistency. In original LIME~\cite{ribeiro-etal-2016-trust}, the loss function $L$, weighting kernel $\pi_x$, and complexity penalty $\Omega$ are chosen heuristically (e.g., exponential distance kernels and Ridge/Lasso regularization), causing LIME to violate Local Accuracy and Consistency.
+
+To resolve this limitation, Lundberg and Lee~\cite{NIPS2017_8a20a862} solved the inverse problem: deriving the exact analytical forms of $L$, $\pi_x$, and $\Omega$ that force the linear regression solution to recover exact Shapley values:
+
+\begin{theorem}[Shapley Kernel]
+\label{thm:shapley-kernel}
+Under Definition~\ref{def:additive-attribution}, the unique choices of regularization penalty $\Omega(g)$, weighting kernel $\pi_x(z')$, and squared loss function $L$ that ensure the solution to the surrogate optimization objective matches the Shapley values and satisfies Properties 1 through 3 are:
+\begin{align}
+    \Omega(g) &= 0 \label{eq:kernelshap-reg} \\
+    \pi_x(z') &= \frac{M - 1}{\binom{M}{|z'|} \, |z'| \, (M - |z'|)} \label{eq:shap-kernel} \\
+    L(f, g, \pi_x) &= \sum_{z' \in \mathcal{Z}} \left[ f(h_x(z')) - g(z') \right]^2 \pi_x(z') \label{eq:kernelshap-loss}
+\end{align}
+where $|z'| = \sum_{j=1}^M z'_j$ denotes the number of non-zero (active) features in binary coalition vector $z'$.
+\end{theorem}
+
+\paragraph{Enforcing Local Accuracy via Infinite Boundary Weights:}
+A fundamental property of the SHAP kernel in \Cref{eq:shap-kernel} is that $\pi_x(z') \to \infty$ when $|z'| \in \{0, M\}$ (i.e., for the null coalition $\mathbf{0}$ and the grand coalition $\mathbf{1}$). These infinite weights act as strict equality constraints on the optimization problem:
+\begin{equation}
+    g(\mathbf{0}) = \phi_0 = f_x(\emptyset), \qquad g(\mathbf{1}) = \phi_0 + \sum_{i=1}^M \phi_i = f(x)
+\end{equation}
+which theoretically guarantees that Property~1 (Local Accuracy / Efficiency) is satisfied exactly. In practical implementation, numerical instability from infinite weights is avoided during optimization by analytically eliminating the base intercept $\phi_0$ and enforcing $\sum_{i=1}^M \phi_i = f(x) - \phi_0$ directly as a linear constraint.
+
+\paragraph{Intuition and Sample Efficiency:}
+The theoretical equivalence between weighted linear regression and Shapley values stems from the observation that the Shapley formula (\Cref{eq:shapley-formula}) computes a weighted difference of conditional expectations (means). Because the sample mean is the optimal least-squares estimator for a set of observations, minimizing a weighted squared loss over coalition subsets naturally estimates the Shapley values. 
+
+Importantly, solving for all attributions $\phi$ simultaneously via weighted least squares provides significantly higher sample efficiency than sampling permutations individually, enabling accurate model-agnostic explanations with only a few thousand background perturbations.
+
+\paragraph{Algorithmic Execution Pipeline:}
+In practice, KernelSHAP computes attributions through a four-step pipeline:
+\begin{enumerate}[leftmargin=1.5em, itemsep=2pt]
+    \item \textbf{Coalition Sampling:} Draws $K$ binary coalition vectors $z'_k \in \{0, 1\}^M \setminus \{\mathbf{0}, \mathbf{1}\}$ according to the distribution implied by $\pi_x(z')$.
+    \item \textbf{Background Imputation ($h_x(z')$):} Maps each binary coalition vector $z'$ to the original feature space:
+    \begin{equation}
+        [h_x(z')]_j = 
+        \begin{cases}
+            x_j & \text{if } z'_j = 1 \quad (\text{feature is active in coalition}) \\
+            r_j & \text{if } z'_j = 0 \quad (\text{feature is imputed from background sample } r \sim \mathcal{D}_{\text{bg}})
+        \end{cases}
+    \end{equation}
+    \item \textbf{Oracle Model Evaluation:} Evaluates the black-box model $f$ on the imputed instances to obtain predicted targets $y_k = f(h_x(z'_k))$.
+    \item \textbf{Constrained Weighted Least Squares:} Solves the closed-form weighted regression:
+    \begin{equation}
+        \phi = \left( Z'^T W Z' \right)^{-1} Z'^T W y
+    \end{equation}
+    where $Z' \in \mathbb{R}^{K \times M}$ is the sampled binary matrix, $W = \text{diag}(\pi_x(z'_1), \dots, \pi_x(z'_K))$, and $y \in \mathbb{R}^K$ contains the prediction differences relative to the baseline.
+\end{enumerate}
+
+\subsection{Worked Examples}
+\label{sec:worked-examples}
+
+To provide concrete arithmetic verification without reliance on black-box software packages, we construct a compact two-feature illustrative model:
+\begin{equation}
+    f(x_1, x_2) = 0.2 + 0.4 x_1 + 0.3 x_2 + 0.2 x_1 x_2
+\end{equation}
+defined over feature values $x_1, x_2 \in [0, 1]$ with uniform background expectations $\mathbb{E}[x_1] = 0.5$ and $\mathbb{E}[x_2] = 0.5$.
+
+\subsubsection{Hand-Worked Calculation for SHAP}
+Let the query instance be $x = (1, 1)$. The model prediction is $f(1, 1) = 0.2 + 0.4(1) + 0.3(1) + 0.2(1)(1) = 1.10$.
+The baseline expectation is:
+\begin{equation}
+    \phi_0 = \mathbb{E}[f(X)] = 0.2 + 0.4(0.5) + 0.3(0.5) + 0.2(0.5)(0.5) = 0.60
+\end{equation}
+
+For feature 1 ($i = 1$), the set of other features is $\{2\}$, with possible coalitions $S = \emptyset$ and $S = \{2\}$:
+\begin{align*}
+    S = \emptyset: & \quad |S|=0, \quad \text{Weight} = \frac{0! \cdot 1!}{2!} = \frac{1}{2}, \quad \Delta_1(\emptyset) = \mathbb{E}[f(1, X_2)] - \phi_0 \\
+    & \quad \mathbb{E}[f(1, X_2)] = 0.2 + 0.4(1) + 0.3(0.5) + 0.2(1)(0.5) = 0.85 \\
+    & \quad \Delta_1(\emptyset) = 0.85 - 0.60 = 0.25 \\
+    S = \{2\}: & \quad |S|=1, \quad \text{Weight} = \frac{1! \cdot 0!}{2!} = \frac{1}{2}, \quad \Delta_1(\{2\}) = f(1, 1) - \mathbb{E}[f(X_1, 1)] \\
+    & \quad \mathbb{E}[f(X_1, 1)] = 0.2 + 0.4(0.5) + 0.3(1) + 0.2(0.5)(1) = 0.80 \\
+    & \quad \Delta_1(\{2\}) = 1.10 - 0.80 = 0.30
+\end{align*}
+Combining the weighted contributions:
+\begin{equation}
+    \phi_1 = \frac{1}{2}(0.25) + \frac{1}{2}(0.30) = 0.275
+\end{equation}
+Similarly, for feature 2 ($i = 2$):
+\begin{equation}
+    \phi_2 = \frac{1}{2}(0.80 - 0.60) + \frac{1}{2}(1.10 - 0.85) = \frac{1}{2}(0.20) + \frac{1}{2}(0.25) = 0.225
+\end{equation}
+Verification of Local Accuracy:
+\begin{equation}
+    \phi_0 + \phi_1 + \phi_2 = 0.60 + 0.275 + 0.225 = 1.10 = f(1, 1)
+\end{equation}
+
+\subsubsection{Hand-Worked Calculation for LIME}
+For LIME, perturbation samples are drawn around $x = (1, 1)$ and weighted via exponential kernel $\pi_x(z) = \exp(-D(x, z)^2 / \sigma^2)$ to solve a weighted least-squares problem, demonstrating that the resulting surrogate slope approximates $\nabla f(x)$ locally.

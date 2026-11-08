@@ -1,0 +1,78 @@
+\section{Background and Related Work}
+\label{sec:background}
+
+\subsection{Taxonomy of Explainable AI (XAI)}
+\label{sec:taxonomy}
+
+Explainable Artificial Intelligence (XAI) addresses the tension between model accuracy and interpretability. To establish a structured foundation, the literature synthesizes XAI techniques across primary operational dimensions~\cite{BARREDOARRIETA202082, 10.1016/j.neucom.2024.128111}:
+
+\subsubsection{Interpretability vs.\ Explainability}
+The boundary between interpretability and explainability remains an active subject of discussion in the machine learning literature. As surveyed comprehensively by Mersha et al.~\cite{10.1016/j.neucom.2024.128111}, although these two terms are frequently conflated in casual discourse, most studies agree that they denote related but distinct concepts:
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt]
+    \item \textbf{Interpretability (How the model works):} Refers to the inherent capacity of a system to be understood directly by human observers without external aids. An interpretable model possesses intrinsic algorithmic transparency, allowing stakeholders to trace internal calculations and understand the complete decision mechanics (e.g., shallow decision trees or sparse linear models).
+    \item \textbf{Explainability (Why the model predicts):} Pertains to the ability of an external, secondary interface to clarify and justify the outputs of an opaque system. Explainability does not require the underlying architecture to be transparent; instead, it relies on post-hoc surrogate methods to articulate the rationale behind a decision in human-understandable terms.
+\end{itemize}
+In short, interpretability concerns the internal mechanics of a model, whereas explainability focuses on rationalizing specific predictions. Within this conceptual division, LIME and SHAP serve fundamentally as post-hoc tools for explainability.
+
+\subsubsection{Local vs.\ Global Explanations}
+Depending on the scope of the explanation, XAI techniques generally operate at either a local or a global level:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Local Explanations:} Focus on explaining a single prediction for an individual instance. Rather than describing how the model behaves everywhere, a local explanation identifies which specific features drove the decision for that particular case. For example, in clinical diagnosis, a local explanation reveals why a specific patient was assigned a 94\% probability of malignancy (e.g., due to extreme tumor radius and irregular texture).
+    \item \textbf{Global Explanations:} Aim to describe the overall behavior of the model across the entire dataset. A global explanation provides a high-level summary of how the model makes decisions in general, revealing overall feature rankings and broader decision patterns (e.g., determining which clinical indicators are universally most influential across all patients).
+\end{itemize}
+While LIME was originally formulated strictly for local explanations, SHAP values computed locally for individual instances can be aggregated across the entire dataset to provide consistent global insights.
+
+\subsubsection{Ante-hoc vs.\ Post-hoc Interpretability}
+The critical difference between ante-hoc and post-hoc techniques is the stage of implementation relative to model training~\cite{BARREDOARRIETA202082, 10.1016/j.neucom.2024.128111}:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Ante-hoc Methods:} Employed during the model design and training stages to ensure that the system is transparent and directly understandable by construction (e.g., shallow decision trees, Generalized Additive Models, and Bayesian models).
+    \item \textbf{Post-hoc Methods:} Employed after the model has been trained and its parameters frozen. Post-hoc techniques do not modify the original architecture; instead, they construct external explanation mechanisms to elucidate the decision-making process of opaque models (such as deep neural networks and Random Forests).
+\end{itemize}
+Both LIME and SHAP are foundational post-hoc explanation techniques, designed to interrogate already-trained black-box models.
+
+\subsubsection{Model-Specific vs.\ Model-Agnostic Post-hoc Explanations}
+As categorized by Barredo Arrieta et al.~\cite{BARREDOARRIETA202082} and surveyed by Mersha et al.~\cite{10.1016/j.neucom.2024.128111}, post-hoc explanation techniques branch into two distinct operational paradigms:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Model-Specific Methods:} Techniques designed specifically for a single model family by taking advantage of its internal structure. Because they have direct access to internal components (such as split thresholds of decision trees or neural network weights), they are computationally efficient. For instance, \textbf{TreeSHAP} inspects tree branches directly to calculate Shapley values in polynomial time, but only works on tree-based models.
+    \item \textbf{Model-Agnostic Methods:} Universal techniques that can be applied to \textit{any} machine learning model without knowing what is inside. They treat the model as a strict black box, observing only how predictions change when input values are slightly perturbed. \textbf{LIME} and \textbf{KernelSHAP} belong to this category.
+\end{itemize}
+
+\subsection{LIME}
+\label{sec:review-lime}
+
+In \textit{``Why Should I Trust You?'': Explaining the Predictions of Any Classifier}~\cite{ribeiro-etal-2016-trust}, Ribeiro, Singh, and Guestrin formalized Local Interpretable Model-agnostic Explanations (LIME). The core philosophy of LIME asserts that although a decision surface $f: \mathbb{R}^d \rightarrow [0, 1]$ may be globally non-linear and intractable, it is locally smooth within an $\epsilon$-ball centered at a target query point $x$. Consequently, $f$ can be faithfully approximated in that localized region by an interpretable surrogate model $g \in G$.
+
+LIME operationalizes this insight through stochastic perturbation:
+\begin{enumerate}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{Perturbation Sampling:} Draws synthetic instances $z'$ uniformly or via normal perturbation around the query instance in an interpretable representation space (e.g., binary word indicators or superpixel segments).
+    \item \textbf{Locality Weighting:} Maps perturbed instances back to original feature space $z = h_x(z')$ and weights each perturbation using an exponential distance kernel $\pi_x(z) = \exp(-D(x, z)^2 / \sigma^2)$.
+    \item \textbf{Surrogate Model Fitting:} Solves a weighted penalization loss objective, optimizing the surrogate parameters to minimize local approximation error while constraining complexity $\Omega(g)$.
+\end{enumerate}
+
+\subsection{SHAP}
+\label{sec:review-shap}
+
+In \textit{A Unified Approach to Interpreting Model Predictions}~\cite{NIPS2017_8a20a862}, Lundberg and Lee addressed a major fragmentation in the XAI literature: prior to 2017, numerous interpretability methods existed (such as LIME, DeepLIFT, and Layer-Wise Relevance Propagation), yet there was no common theoretical framework to compare their mathematical guarantees.
+
+The fundamental insight of SHAP is twofold:
+\begin{enumerate}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{A Unified Class of Additive Explanations:} Lundberg and Lee proved that several prominent local explanation methods can all be formalized as \textit{additive feature attribution methods}---approximating the model locally as a linear sum of feature contributions.
+    \item \textbf{Game-Theoretic Optimality (Shapley Values):} Drawing from cooperative game theory~\cite{shapley1953value}, SHAP demonstrates that assigning credit using classical Shapley values is the \textit{only} formulation that guarantees three essential fairness properties:
+    \begin{itemize}[leftmargin=1.2em, itemsep=1pt]
+        \item \textit{Local Accuracy (Efficiency):} The sum of all feature contributions, combined with the baseline average prediction, exactly recovers the actual model output.
+        \item \textit{Missingness:} A feature that is completely absent from the input receives zero contribution.
+        \item \textit{Consistency (Monotonicity):} If a model changes such that a feature's marginal contribution increases (or stays the same) regardless of other features, its assigned importance will never decrease.
+    \end{itemize}
+\end{enumerate}
+
+To make Shapley values computationally tractable in practice, Lundberg and Lee initially introduced \textbf{KernelSHAP}~\cite{NIPS2017_8a20a862}, a model-agnostic approximation based on weighted linear regression. Subsequently, Lundberg et al.~\cite{lundberg2018consistent} proposed \textbf{TreeSHAP}, a dedicated model-specific algorithm that computes exact Shapley values for tree ensembles in polynomial time.
+
+\subsection{Taxonomic Positioning of LIME and SHAP}
+\label{sec:taxonomic-positioning}
+
+Synthesizing the theoretical frameworks of Ribeiro et al.~\cite{ribeiro-etal-2016-trust} and Lundberg and Lee~\cite{NIPS2017_8a20a862} against the taxonomy of Mersha et al.~\cite{10.1016/j.neucom.2024.128111}:
+\begin{itemize}[leftmargin=1.2em, itemsep=1.5pt]
+    \item \textbf{LIME} occupies the quadrant of \textit{Post-hoc, Local, Model-Agnostic, Surrogate-based} explainability.
+    \item \textbf{SHAP (KernelSHAP)} is \textit{Post-hoc, Local, Model-Agnostic, Axiomatic-attribution} explainability.
+    \item \textbf{TreeSHAP} transitions into \textit{Post-hoc, Local, Model-Specific (Tree-Ensemble)} explainability, exchanging model agnosticism for exact determinism and orders-of-magnitude computational speedups.
+\end{itemize}
