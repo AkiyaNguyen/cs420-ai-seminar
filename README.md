@@ -57,3 +57,4 @@ Wolberg, W., Street, W. N. & Mangasarian, O. (1995). *Breast Cancer Wisconsin (D
 
 - Ribeiro, M. T., Singh, S. & Guestrin, C. (2016). "Why Should I Trust You?": Explaining the Predictions of Any Classifier. *KDD 2016*.
 - Lundberg, S. M. & Lee, S.-I. (2017). A Unified Approach to Interpreting Model Predictions. *NeurIPS 2017*.
+- Mersha, M., Lam, K., Wood, J., AlShami, A. K., & Kalita, J. (2024). Explainable artificial intelligence: A survey of needs, techniques, applications, and future direction. *Neurocomputing*, 599, 128111. [doi:10.1016/j.neucom.2024.128111](https://doi.org/10.1016/j.neucom.2024.128111)
