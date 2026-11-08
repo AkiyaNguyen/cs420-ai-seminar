@@ -31,9 +31,9 @@ python -m venv .venv
 Run any script from this folder; each writes its figures and tables to `report/` (created on first run) and prints the tables to stdout. Scripts are independent and deterministic (`SEED = 42`). Approximate runtimes: exp1 ~20 s, exp2 ~4 min, exp3 ~3 min.
 
 ```bash
-.venv/Scripts/python.exe src/src/exp1_local_explanations.py
-.venv/Scripts/python.exe src/src/exp2_stability.py
-.venv/Scripts/python.exe src/src/exp3_faithfulness.py
+.venv/Scripts/python.exe src/exp1_local_explanations.py
+.venv/Scripts/python.exe src/exp2_stability.py
+.venv/Scripts/python.exe src/exp3_faithfulness.py
 ```
 
 ## Building the paper
