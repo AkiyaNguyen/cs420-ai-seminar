@@ -204,6 +204,12 @@
     \end{equation}
     Since the coalitions are already drawn according to the kernel, they enter the regression with equal weights, and the constraint is handled by eliminating one coefficient. Each explanation requires $N \cdot |B|$ model evaluations. Lundberg and Lee~\cite{NIPS2017_8a20a862} report that this joint regression attains a given accuracy with considerably fewer evaluations than estimating each attribution separately by permutation sampling.
 
+    \subsubsection{Limitations}
+
+    Interventional SHAP attributions depend on the background distribution used to represent absent features. When features are correlated, combining retained values from the explained instance with values from background rows can produce unlikely feature combinations. In \Cref{sec:instability-divergence}, changing the background reverses the signs of the two leading attributions for the borderline instance.
+
+    KernelSHAP introduces sampling variability when it estimates attributions from a finite set of coalitions. The local accuracy constraint ensures that the attributions sum to the difference between the prediction and the baseline, even when individual estimates vary across runs. In \Cref{sec:instability-divergence}, with 2,000 coalitions, the same five features appeared in the top five of every run for the borderline instance, but two different features ranked first across runs.
+
     \subsection{Illustrative Example}
     \label{sec:worked-examples}
 
