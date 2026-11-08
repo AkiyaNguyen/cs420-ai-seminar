@@ -26,7 +26,7 @@ BACKGROUND_SIZE = 100
 LIME_NUM_SAMPLES = 5000
 KERNEL_SHAP_NSAMPLES = 2000
 
-CODE_DIR = Path(__file__).resolve().parent
+CODE_DIR = Path(__file__).resolve().parent.parent
 REPORT_DIR = CODE_DIR / "report"
 FIGURE_DIR = REPORT_DIR / "figures"
 TABLE_DIR = REPORT_DIR / "tables"
