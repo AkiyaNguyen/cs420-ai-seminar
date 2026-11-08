@@ -9,10 +9,10 @@ Three experiments compare LIME, Kernel SHAP and TreeSHAP on a Random Forest, wit
 
 | File | Required Tasks | Purpose | Used in the paper |
 |---|---|---|---|
-| `exp1_local_explanations.py` | 3, 4, 5 | 3-feature Shapley sanity check; 3 instances explained by every method; feature-contribution charts, LIME-versus-SHAP table | Section 4.2: contribution and waterfall figures, LIME-versus-SHAP table |
-| `exp2_stability.py` | 5 | Sensitivity to seed, sample budget, LIME kernel width and SHAP background; runtime; unstable explanation example | Section 4.3: stability and background tables; Appendix C figure |
-| `exp3_faithfulness.py` | 6 | Deletion curves against a random baseline; correlated features (drop redundant / add noisy copy) to show importance is not causation | Section 5.1: deletion AUC table; Section 5.2: correlated-features table. Its figures are not used |
-| `common.py` | — | Data split, models, instance selection, explainer wrappers, comparison metrics, figure/table saving | — |
+| `src/exp1_local_explanations.py` | 3, 4, 5 | 3-feature Shapley sanity check; 3 instances explained by every method; feature-contribution charts, LIME-versus-SHAP table | Section 4.2: contribution and waterfall figures, LIME-versus-SHAP table |
+| `src/exp2_stability.py` | 5 | Sensitivity to seed, sample budget, LIME kernel width and SHAP background; runtime; unstable explanation example | Section 4.3: stability and background tables; Appendix C figure |
+| `src/exp3_faithfulness.py` | 6 | Deletion curves against a random baseline; correlated features (drop redundant / add noisy copy) to show importance is not causation | Section 5.1: deletion AUC table; Section 5.2: correlated-features table. Its figures are not used |
+| `src/common.py` | — | Data split, models, instance selection, explainer wrappers, comparison metrics, figure/table saving | — |
 | `CS420-Report/` | 1–6 | LaTeX sources and compiled `main.pdf` of the seminar paper | — |
 
 The scripts write their figures and tables to `report/figures/` and `report/tables/` (prefixed `exp1_`, `exp2_`, `exp3_`). `report/` and `slides/` are kept locally and are not tracked; figures used in the paper are copied into `CS420-Report/img/`.
@@ -31,9 +31,9 @@ python -m venv .venv
 Run any script from this folder; each writes its figures and tables to `report/` (created on first run) and prints the tables to stdout. Scripts are independent and deterministic (`SEED = 42`). Approximate runtimes: exp1 ~20 s, exp2 ~4 min, exp3 ~3 min.
 
 ```bash
-.venv/Scripts/python.exe exp1_local_explanations.py
-.venv/Scripts/python.exe exp2_stability.py
-.venv/Scripts/python.exe exp3_faithfulness.py
+.venv/Scripts/python.exe src/src/exp1_local_explanations.py
+.venv/Scripts/python.exe src/src/exp2_stability.py
+.venv/Scripts/python.exe src/src/exp3_faithfulness.py
 ```
 
 ## Building the paper
