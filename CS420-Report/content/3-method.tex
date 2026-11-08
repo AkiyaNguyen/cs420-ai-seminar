@@ -113,7 +113,7 @@
     where $z' \in \{0, 1\}^M$ is a binary vector indicating the presence ($z'_i = 1$) or absence ($z'_i = 0$) of simplified feature $i$, $M$ is the number of simplified input features, $\phi_i \in \mathbb{R}$ is the effect attributed to feature $i$, and $\phi_0 \in \mathbb{R}$ is a constant base value.
     \end{definition}
 
-    Such a method explains $f(x)$ as a base value plus the sum of the feature effects, evaluated at $x' = \mathbf{1}$. Lundberg and Lee~\cite{NIPS2017_8a20a862} showed that widely adopted local explanation frameworks, including LIME, DeepLIFT, and Layer-Wise Relevance Propagation, all match this formulation, differing primarily in how they define the mapping $h_x$, the neighborhood kernel, and their specific attribution coefficients.
+    Such a method explains $f(x)$ as a base value plus the sum of the feature effects, evaluated at $x' = \mathbf{1}$. In the notation of \Cref{sec:math-lime}, $M = d'$ and $\phi_i$ corresponds to the coefficient of component $i$ in $w_g$. As discussed in \Cref{sec:review-shap}, LIME, DeepLIFT, and layer-wise relevance propagation all belong to this class. For the same $f$ and $x$, however, they generally assign different values to $\phi$, which raises the question of which attribution should be preferred.
 
     \subsubsection{Shapley Values}
     In cooperative game theory, the Shapley value distributes the total payoff of a game among its players according to their average marginal contributions~\cite{shapley1953value}. In the explanation setting, the features play the role of the players and the prediction that of the payoff, which yields the attribution
@@ -133,7 +133,7 @@
         &\approx \mathbb{E}_{X_{\bar{S}}}\left[ f(x_S, X_{\bar{S}}) \right] \label{eq:approx-indep} \\
         &\approx f\left( \left[ x_S, \mathbb{E}[X_{\bar{S}}] \right] \right) \label{eq:approx-lin}
     \end{align}
-    where $x_S$ denotes the values of the features in $S$ and $\bar{S} = F \setminus S$ the absent features. \Cref{eq:approx-marginal} rewrites the conditional expectation as an expectation over the absent features, \Cref{eq:approx-indep} assumes feature independence, and \Cref{eq:approx-lin} additionally assumes model linearity. KernelSHAP and interventional Tree SHAP estimate \Cref{eq:approx-indep} with a background set, whereas \Cref{eq:approx-lin} corresponds to replacing absent features by their means.
+    where $x_S$ denotes the values of the features in $S$ and $\bar{S} = F \setminus S$ the absent features. \Cref{eq:approx-marginal} rewrites the conditional expectation as an expectation over the absent features, \Cref{eq:approx-indep} assumes feature independence, and \Cref{eq:approx-lin} additionally assumes model linearity. KernelSHAP and interventional TreeSHAP estimate \Cref{eq:approx-indep} with a background set, whereas \Cref{eq:approx-lin} corresponds to replacing absent features by their means.
 
     \subsubsection{Properties and Uniqueness}
     \label{sec:shap-axioms}
