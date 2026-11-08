@@ -1,0 +1,212 @@
+\section{Experimental Evaluation}
+\label{sec:results}
+
+We evaluate the explainers in two experiments: the first compares the explanations produced for individual predictions, and the second measures their sensitivity to random seeds, sample budgets, and background data. Faithfulness and causality are examined in \Cref{sec:critical-analysis}. Implementation details are given in \Cref{sec:appendix-code}.
+
+\subsection{Experimental Setup}
+\label{sec:setup}
+
+\subsubsection{Dataset}
+The experiments use the Breast Cancer Wisconsin (Diagnostic) dataset~\cite{breast_cancer_dataset}, which contains 569 instances described by 30 continuous features computed from digitized images of fine-needle aspirate biopsies. The features describe ten characteristics of the cell nuclei (radius, texture, perimeter, area, etc.), each summarized by its mean, standard error, and ``worst'' (largest) value. We encode the target as malignant ($y = 1$, 212 instances) versus benign ($y = 0$, 357 instances), so that a positive attribution always pushes the prediction towards malignancy. The data are split into stratified training (455) and test (114) sets with a fixed seed. Several features are almost redundant; for example, the mean radius, perimeter, and area have pairwise correlations of about $0.99$. This redundancy plays a central role in \Cref{sec:critical-analysis}.
+
+\subsubsection{Models}
+The explained model is a random forest (RF) with 300 trees, which reaches a test accuracy of 0.974 (ROC AUC 0.994, 3 errors out of 114); the explained output is $f(x) = P(\text{malignant} \mid x)$. Since $f$ is a tree ensemble, interventional TreeSHAP computes its SHAP values exactly with respect to the background set, and we use it as the deterministic reference for both LIME and KernelSHAP.
+
+\subsubsection{Explainers and Settings}
+Every feature is an interpretable component, so $d' = M = d = 30$. LIME runs in regression mode on $f$, with quartile discretization, $N = 5000$ samples, $K = 30$ (no sparsity constraint, so that all methods rank the same 30 features), and the library's default kernel width $\sigma = 0.75\sqrt{d} \approx 4.1$. KernelSHAP uses $2000$ coalition samples. Both SHAP variants share a background set $B$ of 100 random training instances. As a sanity check, on an RF refitted on three features, KernelSHAP and interventional TreeSHAP reproduce to three decimals the Shapley values obtained by enumerating all eight coalitions, as in \Cref{app:worked-example}.
+
+\subsubsection{Selected Instances}
+Three test instances are chosen from the RF probabilities to cover different levels of model confidence: the most confident correct benign and malignant predictions ($P(\text{malignant}) = 0.000$ and $1.000$), and a \textit{borderline} malignant tumour that RF classifies correctly with $P(\text{malignant}) = 0.513$.
+
+\subsection{Experiment 1: Local Explanations and Agreement}
+\label{sec:feature-attribution}
+
+\subsubsection{Feature Contributions}
+\Cref{fig:rf-contributions} shows the ten largest attributions of each method for the three instances, and \Cref{fig:waterfall} decomposes the borderline prediction additively from the base value to $f(x)$.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.78\textwidth]{img/exp1_rf_contributions.png}
+    \caption{Top-10 attributions of $P(\text{malignant})$ for the three instances (rows) by TreeSHAP (interventional), KernelSHAP, and LIME (columns). Red bars push towards malignant, blue bars towards benign.}
+    \label{fig:rf-contributions}
+\end{figure*}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\columnwidth]{img/exp1_rf_waterfall_borderline.png}
+    \caption{KernelSHAP waterfall for the borderline RF instance: the attributions add up exactly from $\mathbb{E}[f(X)] = 0.346$ to $f(x) = 0.513$.}
+    \label{fig:waterfall}
+\end{figure}
+
+\subsubsection{LIME-versus-SHAP Comparison}
+\Cref{tab:lime-vs-shap-results} compares KernelSHAP and LIME with the reference. \textit{Jaccard@5} is the overlap of the top-5 feature sets; $\rho$ is the Spearman rank correlation of $|\phi_j|$ over all 30 features; \textit{Sign@5} is the share of the reference's top-5 features with matching sign; \textit{Gap} is $|\tilde f(x) - f(x)|$, where the reconstruction $\tilde f(x)$ is $\phi_0 + \sum_j \phi_j$ for SHAP and $g(x')$ for LIME; and \textit{$R^2$} is the coefficient of determination of the surrogate $g$ on its perturbed samples, weighted by $\pi_x$. KernelSHAP and interventional TreeSHAP estimate the same quantity, \Cref{eq:approx-indep} over the same background set, so they must agree as $N \to \infty$; with $N = 2000$ of the $2^{30}$ possible coalitions, however, the agreement is an empirical question. The KernelSHAP gap, in contrast, is zero by construction, because the regression enforces $\sum_j \phi_j = f(x) - \phi_0$.
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \caption{Agreement of KernelSHAP (KS) and LIME with the reference (interventional TreeSHAP).}
+    \label{tab:lime-vs-shap-results}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}llccccc@{}}
+        \toprule
+        Instance & Method & Jacc.@5 & $\rho$ & Sign@5 & Gap & $R^2$ \\
+        \midrule
+        Conf.\ benign & KS & 1.00 & 1.00 & 1.0 & 0.000 & -- \\
+                      & LIME & 0.67 & 0.80 & 1.0 & 0.100 & 0.22 \\
+        \midrule
+        Conf.\ malig. & KS & 1.00 & 0.89 & 1.0 & 0.000 & -- \\
+                      & LIME & 0.67 & 0.85 & 1.0 & 0.056 & 0.68 \\
+        \midrule
+        Borderline & KS & 1.00 & 0.99 & 1.0 & 0.000 & -- \\
+                   & LIME & \textbf{0.43} & \textbf{0.67} & \textbf{0.6} & 0.019 & 0.06 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{Discussion}
+With 2000 coalitions, KernelSHAP recovers the reference top-5 set with matching signs on every instance; its lower rank correlation on the confident malignant instance (0.89) stems from the ordering of the less important features, as no attribution deviates from the reference by more than 0.004. Both SHAP estimators reconstruct $f(x)$ exactly, whereas the LIME surrogate deviates from $f(x)$ by up to 0.10 in probability, with a weighted $R^2$ between 0.06 and 0.68; the local linear model thus often fails to approximate $f$ even near $x$.
+
+Agreement between the methods depends on the confidence of the prediction. For the two confident instances, LIME and SHAP share four of their top-5 features with identical signs. For the borderline instance, LIME shares only three top-5 features with the reference and reverses the sign of two of them, \texttt{area error} and \texttt{mean concave points}. LIME ranks \texttt{worst texture} and \texttt{mean texture} first, whereas SHAP attributes the prediction mainly to \texttt{worst radius} and \texttt{worst area}, to which LIME assigns only a quarter of their SHAP value (\Cref{fig:rf-contributions}, bottom row). Part of this disagreement arises because the two methods measure the effect of $x_j$ against different baselines. A LIME coefficient measures how much the surrogate changes when feature $j$ lies in the same quartile as $x_j$ rather than in another quartile, and it is not constrained to sum to any particular value. A SHAP value measures how much the expected prediction changes when the exact value $x_j$ is known rather than averaged over the background set, and the SHAP values sum to $f(x) - \phi_0$. Both indicate whether $x_j$ pushes the prediction above or below a typical patient, so their signs and ranks can be compared, but their magnitudes cannot: on the borderline instance, for example, \texttt{worst radius} receives 0.017 from LIME and 0.071 from SHAP.
+
+% TODO(TreeSHAP): interpret the interventional vs. path-dependent difference (phi_0 = 0.346 vs. 0.375; top-5 Jaccard 0.67 on the borderline instance).
+
+\subsection{Experiment 2: Explanation Stability}
+\label{sec:instability-divergence}
+
+\subsubsection{Sensitivity to the Random Seed and Sample Budget}
+LIME is run with 30 seeds for each $N \in \{500, 1000, 5000\}$, and KernelSHAP with 15 seeds for each $N \in \{100, 500, 2000\}$, on all three instances. Stability is measured by the mean pairwise Jaccard@5 between runs, the number of distinct top-1 features, and the number of features whose sign changes across runs (\Cref{tab:stability}).
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \caption{Seed stability on RF. ``Top-1'' counts distinct top-1 features across runs; ``Flips'' counts features whose sign changes.}
+    \label{tab:stability}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}llrccc@{}}
+        \toprule
+        Instance & Method & $N$ & Jacc.@5 & Top-1 & Flips \\
+        \midrule
+        Conf.\ malig. & LIME & 500 & 0.79 & 1 & 0 \\
+        \midrule
+        Borderline & LIME & 500 & \textbf{0.25} & \textbf{6} & \textbf{28} \\
+        Borderline & LIME & 5000 & 0.54 & 1 & 8 \\
+        Borderline & KernelSHAP & 100 & 0.92 & 2 & 0 \\
+        Borderline & KernelSHAP & 2000 & 1.00 & 2 & 0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The borderline RF instance provides a clear example of an unstable explanation. Although the model classifies it correctly, LIME with $N = 500$ produces six different top-1 features across 30 seeds, and 28 of the 30 features change sign at least once. The mean pairwise Jaccard@5 of 0.25 corresponds to only two shared features out of five. On the same instance, KernelSHAP keeps the same top-5 set in every run once $N \ge 500$, and its mean absolute deviation from TreeSHAP decreases from $1.3 \times 10^{-3}$ to $1.9 \times 10^{-4}$ as $N$ grows from 100 to 2000. Varying LIME's kernel width over $\{0.25, 0.75, 3\} \cdot \sqrt{d}$ at $N = 5000$ changes the borderline Jaccard@5 only from 0.53 to 0.55, so on this dataset the sample budget matters far more than $\sigma$.
+
+\subsubsection{Sensitivity to the Background Set}
+SHAP values are defined relative to a background distribution. Recomputing the explanations with five different backgrounds changes the base value $\phi_0$ substantially (\Cref{tab:background}). Under the malignant-only background, \texttt{worst area} and \texttt{worst radius}, the two leading features of the borderline instance, \textit{reverse sign}. Both readings are correct: compared with an average patient, the tumour is large; compared with a typical malignant tumour, it is small. \Cref{fig:background} in \Cref{app:background} shows the attributions under all five backgrounds: the two random backgrounds and the $k$-means summary give nearly identical attributions, whereas under the malignant-only background the ranking also changes, with \texttt{worst perimeter} receiving the largest, negative, attribution.
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \caption{Base value $\phi_0$ under different backgrounds, and the number of the borderline RF instance's top-5 features whose sign flips relative to the default.}
+    \label{tab:background}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        Background & $\phi_0$ & Flips \\
+        \midrule
+        Random 100 (default) & 0.346 & 0 \\
+        Random 20 & 0.296 & 0 \\
+        $k$-means, 10 centroids & 0.334 & 0 \\
+        Benign only & 0.027 & 1 \\
+        Malignant only & 0.956 & \textbf{3} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{Discussion}
+All methods are stable on confident instances, but the explanation of the borderline instance, precisely the kind of case that most needs scrutiny, is markedly less stable. LIME is more sensitive to randomness than KernelSHAP: KernelSHAP converges to a well-defined target as $N$ grows, whereas the LIME solution depends on $\pi_x$ and on the discretization, and even at $N = 5000$ the borderline Jaccard@5 reaches only 0.54. This stability comes at a cost. At $N = 2000$, KernelSHAP is four to five times slower than LIME at $N = 5000$ ($\approx 0.7$--$0.9$\,s versus $\approx 0.17$\,s), because every coalition is averaged over the 100 background rows, while TreeSHAP takes $\approx 0.02$\,s. SHAP, in turn, is sensitive to the reference: the background moves $\phi_0$ from 0.03 to 0.96 and changes attribution signs, so it is an integral part of a SHAP explanation and must be reported with it.
+
+\subsection{Comparison Summary}
+\label{sec:comparison-table}
+
+\Cref{tab:lime-vs-shap} summarizes the three explainers, combining the theory of \Cref{sec:method} with the measurements above.
+
+\begin{table*}[t]
+    \centering
+    \caption{Summary comparison of LIME, KernelSHAP, and TreeSHAP (theory and our measurements).}
+    \label{tab:lime-vs-shap}
+    \footnotesize
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{@{}>{\bfseries}p{0.17\textwidth} X X X@{}}
+        \toprule
+        Dimension & LIME & KernelSHAP & TreeSHAP \\
+        \midrule
+        Foundation & Locally weighted sparse linear surrogate & Shapley values via weighted linear regression & Shapley values via tree traversal \\
+        Uniqueness & Heuristic choices of $\pi_x$, $\Omega$, $\mathcal{L}$ & Unique solution under three properties & Unique solution under three properties \\
+        Local accuracy & Not guaranteed (gap up to 0.10) & Exact (gap $\approx 0$) & Exact (gap $\approx 10^{-4}$) \\
+        Model scope & Any model & Any model & Tree ensembles only \\
+        Determinism & Stochastic & Stochastic, converging in $N$ & Deterministic \\
+        Agreement on the borderline instance & Low (Jaccard@5 0.43) & High (Jaccard@5 1.00) & Reference \\
+        Main sensitivity & Seed, $N$, discretization & Background set, $N$ & Background set \\
+        Runtime per explanation & $\approx 0.15$\,s & $\approx 0.7$--$0.9$\,s & $\approx 0.02$\,s \\
+        Deletion AUC (lower is better) & 0.600 & 0.574 & 0.574 \\
+        \bottomrule
+    \end{tabularx}
+\end{table*}
+
+\section{Discussion}
+\label{sec:critical-analysis}
+
+\subsection{Evaluating Faithfulness: Deletion Curves}
+\label{sec:faithfulness}
+
+An explanation is \textit{faithful} if the features it ranks highest are those the model actually relies on. We propose and apply the following procedure:
+\begin{enumerate}
+    \item For each instance and explainer, rank the features by their attribution towards the predicted class.
+    \item For $k = 0, 1, \dots, 30$, replace the top-$k$ features with values drawn from the background set (50 rows) and record the mean probability of the predicted class.
+    \item Summarize each curve by its normalized area under the curve (AUC). A faithful ranking makes the probability fall quickly and yields a low AUC.
+    \item Compare against a random feature ordering (mean of 10 permutations) as the baseline.
+\end{enumerate}
+The procedure is applied to 40 test instances (20 per class).
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \caption{Deletion AUC over 40 test instances (lower is more faithful).}
+    \label{tab:deletion}
+    \begin{tabular}{@{}lc@{}}
+        \toprule
+        Method & AUC \\
+        \midrule
+        KernelSHAP & \textbf{0.574} \\
+        TreeSHAP & \textbf{0.574} \\
+        LIME & 0.600 \\
+        Random & 0.743 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+All three explainers are far more faithful than the random baseline, and SHAP is slightly ahead of LIME (\Cref{tab:deletion}). This advantage should not be overstated: the test replaces features with background values, which is exactly the notion of feature absence underlying interventional SHAP, and the difference of 0.03 in AUC is measured on only 40 instances.
+
+\subsection{The Causality Caveat: \texorpdfstring{Feature Importance $\neq$ Causal Effect}{Feature Importance is not Causal Effect}}
+Attribution scores describe \textit{what the model relies on}, not \textit{what causes the diagnosis}. To illustrate this, we retrain RF on two modified feature sets. In the \textit{reduced} set, the mean and worst perimeter and area are removed, as they are nearly deterministic functions of the radius. In the \textit{copy} set, a duplicate of \texttt{worst radius} with Gaussian noise (5\% of its standard deviation; correlation 0.999) is added.
+
+\begin{table}[htbp]
+    \centering
+    \footnotesize
+    \caption{Attribution of \texttt{worst radius} and its noisy copy under the three feature sets (global: mean $|\phi_j|$ of TreeSHAP over the test set; local: confident malignant instance). Test accuracy of RF in the last column.}
+    \label{tab:correlated}
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{@{}llcccc@{}}
+        \toprule
+        Feature & Variant & \makecell{Global\\TreeSHAP} & \makecell{Local\\TreeSHAP} & \makecell{Local\\LIME} & Acc. \\
+        \midrule
+        worst radius & full & 0.041 & 0.069 & 0.090 & 0.974 \\
+        worst radius & reduced & \textbf{0.090} & \textbf{0.157} & \textbf{0.213} & 0.956 \\
+        worst radius & + copy & 0.039 & 0.069 & 0.086 & 0.974 \\
+        noisy copy & + copy & \textbf{0.040} & \textbf{0.070} & \textbf{0.095} & 0.974 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+As \Cref{tab:correlated} shows, the accuracy barely changes, yet the explanations do. Removing the redundant features raises the importance of \texttt{worst radius} by a factor of 2.2 (global TreeSHAP) to 2.4 (local LIME), because it absorbs the credit previously shared with perimeter and area; the patients are the same and the model behaves almost identically, yet the explanation tells a different story. Conversely, a noisy copy that carries no additional information receives as much attribution as the original feature, and under both explainers even slightly more, which, read causally, would wrongly suggest that the copy matters. Both LIME and interventional SHAP also vary features independently and thus evaluate the model on implausible inputs, such as a large radius combined with a small area. How credit is split among correlated features therefore depends on the model and the explainer, not on the underlying biology.
+Establishing a causal effect requires an interventional study or an explicit causal model; it cannot be inferred from an attribution $\phi_j$.
+
+\subsection{Limitations of This Study}
+The experiments use a single dataset, a single train/test split, a single explained model, three instances for the local analysis, and 40 instances for the deletion test. They are therefore illustrative rather than conclusive. Moreover, an explanation describes one particular model: equally accurate models may explain the same patient differently (the Rashomon effect), which we do not examine. Only LIME's default tabular configuration was examined, and the deletion test shares its notion of feature absence with interventional SHAP.
