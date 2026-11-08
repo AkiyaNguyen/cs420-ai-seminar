@@ -133,7 +133,7 @@
         &\approx \mathbb{E}_{X_{\bar{S}}}\left[ f(x_S, X_{\bar{S}}) \right] \label{eq:approx-indep} \\
         &\approx f\left( \left[ x_S, \mathbb{E}[X_{\bar{S}}] \right] \right) \label{eq:approx-lin}
     \end{align}
-    where $x_S$ denotes the values of the features in $S$ and $\bar{S} = F \setminus S$ the absent features. \Cref{eq:approx-marginal} rewrites the conditional expectation as an expectation over the absent features, \Cref{eq:approx-indep} assumes feature independence, and \Cref{eq:approx-lin} additionally assumes model linearity. KernelSHAP and interventional TreeSHAP estimate \Cref{eq:approx-indep} with a background set, whereas \Cref{eq:approx-lin} corresponds to replacing absent features by their means.
+    where $x_S$ denotes the values of the features in $S$ and $\bar{S} = F \setminus S$ the absent features. \Cref{eq:approx-marginal} rewrites the conditional expectation as an expectation over the absent features, \Cref{eq:approx-indep} assumes feature independence, and \Cref{eq:approx-lin} additionally assumes model linearity. KernelSHAP and interventional Tree SHAP estimate \Cref{eq:approx-indep} with a background set, whereas \Cref{eq:approx-lin} corresponds to replacing absent features by their means.
 
     \subsubsection{Properties and Uniqueness}
     \label{sec:shap-axioms}
@@ -206,9 +206,9 @@
 
     \subsubsection{Limitations}
 
-    Interventional SHAP attributions depend on the background distribution used to represent absent features. When features are correlated, combining retained values from the explained instance with values from background rows can produce unlikely feature combinations. In \Cref{sec:instability-divergence}, changing the background reverses the signs of the two leading attributions for the borderline instance.
+    The SHAP attributions in our experiments depend on the choice of background data. When features are correlated, combining values from the explained instance with values from background rows can produce unlikely feature combinations. In the KernelSHAP background sweep (\Cref{sec:instability-divergence}), changing the background reversed the signs of two leading attributions for the borderline instance.
 
-    KernelSHAP introduces sampling variability when it estimates attributions from a finite set of coalitions. The local accuracy constraint ensures that the attributions sum to the difference between the prediction and the baseline, even when individual estimates vary across runs. In \Cref{sec:instability-divergence}, with 2,000 coalitions, the same five features appeared in the top five of every run for the borderline instance, but two different features ranked first across runs.
+    With a finite coalition budget, KernelSHAP estimates can vary across runs even when their sum equals the difference between the prediction and the baseline. In our seed sweep with 2,000 coalitions (\Cref{sec:instability-divergence}), the same five features appeared in the top five in every run for the borderline instance, but two different features ranked first across runs.
 
     \subsection{Illustrative Example}
     \label{sec:worked-examples}
