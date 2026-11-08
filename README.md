@@ -15,7 +15,7 @@ Three experiments compare LIME, Kernel SHAP and TreeSHAP on a Random Forest, wit
 | `src/common.py` | — | Data split, models, instance selection, explainer wrappers, comparison metrics, figure/table saving | — |
 | `CS420-Report/` | 1–6 | LaTeX sources and compiled `main.pdf` of the seminar paper | — |
 
-The scripts write their figures and tables to `report/figures/` and `report/tables/` (prefixed `exp1_`, `exp2_`, `exp3_`). `report/` and `slides/` are kept locally and are not tracked; figures used in the paper are copied into `CS420-Report/img/`.
+The scripts write their figures and tables to `report/figures/` and `report/tables/` (prefixed `exp1_`, `exp2_`, `exp3_`). `report/` is kept locally and is not tracked; figures used in the paper are copied into `CS420-Report/img/`. The presentation source and PDF are in `slides/` (compile with `pdflatex lime_shap_presentation.tex`).
 
 ## Setup
 
