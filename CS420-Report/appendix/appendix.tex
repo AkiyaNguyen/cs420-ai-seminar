@@ -71,6 +71,11 @@ and hence $g(x') = 1.096$.
 \subsection{Comparison}
 The ranking agrees with SHAP, but local accuracy fails: $g(x') = 1.096 \neq f(x) = 1.10$, because the interaction term $0.2\,x_1 x_2$ cannot be represented by a linear $g$ and the residual is spread over all four samples. The result also depends on $\sigma$. As $\sigma \to \infty$, all weights become equal and the fit reduces to ordinary least squares, giving $w_1 = 0.275$, $w_2 = 0.225$, $w_0 = 0.5875 \neq \phi_0$, and $g(x') = 1.0875$, so local accuracy still fails. The slopes coincide with the Shapley values only because $M = 2$: an unweighted regression over all coalitions yields the Banzhaf values, which equal the Shapley values for two features but differ from them in general. The SHAP kernel (\Cref{eq:shap-kernel}) instead assigns infinite weight to $z' = \mathbf{0}$ and $z' = \mathbf{1}$, which forces $g(\mathbf{0}) = \phi_0$ and $g(\mathbf{1}) = f(x)$ and recovers the Shapley values for any $M$.
 
+\section{Source for the Shapley Kernel Proof}
+\label{app:shapley-kernel-proof}
+
+The proof of Theorem~\ref{thm:shapley-kernel} is given in the supplementary note \emph{Shapley Kernel Proof} by Lundberg and Lee~\cite{NIPS2017_8a20a862}. To download the standalone proof, select \emph{Download} under \emph{shapley kernel proof} in the \emph{Supplementary resources} section of the \href{https://www.researchgate.net/publication/317062430_A_Unified_Approach_to_Interpreting_Model_Predictions}{ResearchGate publication page}.
+
 \section{Reproducibility and Source Code}
 \label{sec:appendix-code}
 

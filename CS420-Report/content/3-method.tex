@@ -183,6 +183,8 @@
     where $|z'| = \sum_{j=1}^M z'_j$ denotes the number of non-zero (active) features in binary coalition vector $z'$.
     \end{theorem}
 
+    See \Cref{app:shapley-kernel-proof} for the original proof.
+
     The SHAP kernel in \Cref{eq:shap-kernel} satisfies $\pi_x(z') \to \infty$ when $|z'| \in \{0, M\}$ (i.e., for the null coalition $\mathbf{0}$ and the grand coalition $\mathbf{1}$). These infinite weights act as strict equality constraints on the optimization problem:
     \begin{equation}
         g(\mathbf{0}) = \phi_0 = f_x(\emptyset), \qquad g(\mathbf{1}) = \phi_0 + \sum_{i=1}^M \phi_i = f(x)
