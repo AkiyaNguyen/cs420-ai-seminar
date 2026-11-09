@@ -8,27 +8,44 @@ We compute the SHAP and LIME explanations by hand for the two-feature model
 where $X_1$ and $X_2$ are independent and uniformly distributed on $[0, 1]$, so that $\mathbb{E}[X_1] = \mathbb{E}[X_2] = 0.5$. The instance is $x = (1, 1)$, with prediction $f(1, 1) = 1.10$.
 
 \subsection{SHAP Values}
-The base value is
-\begin{equation}
-    \begin{split}
-        \phi_0 = \mathbb{E}[f(X)] &= 0.2 + 0.4(0.5) + 0.3(0.5) + 0.2(0.5)(0.5) \\
-        &= 0.60 .
-    \end{split}
-\end{equation}
-For feature 1, the coalitions are $S = \emptyset$ and $S = \{2\}$, both with weight $\frac{0!\,1!}{2!} = \frac{1!\,0!}{2!} = \frac{1}{2}$. The required values are
-\begin{align*}
-    f_x(\{1\}) = \mathbb{E}[f(1, X_2)] &= 0.2 + 0.4 + 0.15 + 0.1 = 0.85, \\
-    f_x(\{2\}) = \mathbb{E}[f(X_1, 1)] &= 0.2 + 0.2 + 0.3 + 0.1 = 0.80,
-\end{align*}
-so the marginal contributions of feature 1 are $0.85 - 0.60 = 0.25$ for $S = \emptyset$ and $1.10 - 0.80 = 0.30$ for $S = \{2\}$, and
+Under feature independence with $\mathbb{E}[X_1] = \mathbb{E}[X_2] = 0.5$, the expected prediction $f_x(S) = \mathbb{E}[f(X) \mid X_S = x_S]$ for each of the four coalitions $S \subseteq \{1, 2\}$ is:
+
+\begin{center}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{@{}llc@{}}
+        \toprule
+        Subset $S$ & Evaluation & $f_x(S)$ \\
+        \midrule
+        $\emptyset$ & $0.2 + 0.4(0.5) + 0.3(0.5) + 0.2(0.5)^2$ & $0.60 = \phi_0$ \\
+        $\{1\}$ & $0.2 + 0.4(1) + 0.3(0.5) + 0.2(1)(0.5)$ & $0.85$ \\
+        $\{2\}$ & $0.2 + 0.4(0.5) + 0.3(1) + 0.2(0.5)(1)$ & $0.80$ \\
+        $\{1, 2\}$ & $0.2 + 0.4(1) + 0.3(1) + 0.2(1)(1)$ & $1.10 = f(x)$ \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+
+For $M = 2$, each coalition size $|S| \in \{0, 1\}$ receives Shapley weight $w(|S|) = \frac{|S|!(2 - |S| - 1)!}{2!} = \frac{1}{2}$. 
+
+For feature 1, the marginal contributions across its preceding subsets are:
+\begin{itemize}[leftmargin=1.2em, itemsep=0.5pt, topsep=1pt]
+    \item $S = \emptyset$: $f_x(\{1\}) - f_x(\emptyset) = 0.85 - 0.60 = 0.25$,
+    \item $S = \{2\}$: $f_x(\{1, 2\}) - f_x(\{2\}) = 1.10 - 0.80 = 0.30$,
+\end{itemize}
+giving the attribution:
 \begin{equation}
     \phi_1 = \tfrac{1}{2}(0.25) + \tfrac{1}{2}(0.30) = 0.275 .
 \end{equation}
-Similarly,
+Similarly, for feature 2:
+\begin{itemize}[leftmargin=1.2em, itemsep=0.5pt, topsep=1pt]
+    \item $S = \emptyset$: $f_x(\{2\}) - f_x(\emptyset) = 0.80 - 0.60 = 0.20$,
+    \item $S = \{1\}$: $f_x(\{1, 2\}) - f_x(\{1\}) = 1.10 - 0.85 = 0.25$,
+\end{itemize}
+yielding:
 \begin{equation}
-    \phi_2 = \tfrac{1}{2}(0.80 - 0.60) + \tfrac{1}{2}(1.10 - 0.85) = 0.225 ,
+    \phi_2 = \tfrac{1}{2}(0.20) + \tfrac{1}{2}(0.25) = 0.225 .
 \end{equation}
-and local accuracy holds: $\phi_0 + \phi_1 + \phi_2 = 0.60 + 0.275 + 0.225 = 1.10 = f(1, 1)$.
+Local accuracy holds exactly: $\phi_0 + \phi_1 + \phi_2 = 0.60 + 0.275 + 0.225 = 1.10 = f(1, 1)$.
 
 \subsection{LIME Explanation}
 Each feature is one interpretable component, so $x' = (1, 1)$. A removed component is replaced by its mean $0.5$, i.e., $[h_x(z')]_j = x_j$ if $z'_j = 1$ and $0.5$ otherwise. Because $f$ is linear in each feature separately and the features are independent, this mean imputation (\Cref{eq:approx-lin}) yields the same coalition values as the expectations used above (\Cref{eq:approx-indep}), so the two explanations are based on identical information. With $d' = 2$, we enumerate all four perturbed samples instead of sampling them, take $D(x, z)^2$ as the number of removed components, and set $\sigma = 1$, so that $\pi_x = e^{-D^2}$:
